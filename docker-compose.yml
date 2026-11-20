@@ -1,0 +1,35 @@
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: alumni_searcher
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d alumni_searcher"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/alumni_searcher
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      PHANTOMBUSTER_API_KEY: ${PHANTOMBUSTER_API_KEY}
+      PHANTOMBUSTER_AGENT_ID: ${PHANTOMBUSTER_AGENT_ID}
+      BRIDGLY_API_KEY: ${BRIDGLY_API_KEY}
+
+volumes:
+  postgres_data:
