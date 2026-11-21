@@ -108,11 +108,6 @@ public List<AlumniResponse> searchAlumni(AlumniSearchRequest request) {
         List<Alumni> alumniList =
                 processPhantomResults(resultObject, newSearch);
 
-        if (alumniList.isEmpty()) {
-            throw new RuntimeException(
-                    "PhantomBuster returned no alumni profiles"
-            );
-        }
 
         List<Alumni> savedAlumni =
                 alumniRepository.saveAll(alumniList);
@@ -327,6 +322,13 @@ private JsonNode waitForPhantom(String containerId)
 
         if ("finished".equalsIgnoreCase(status)) {
 
+            String output1 = container.path("output").asText("");
+
+if (output1.toLowerCase().contains("monthly search limits reached")) {
+    throw new RuntimeException(
+            "Monthly search limits reached for the connected LinkedIn account. Please try again after the allowance resets."
+    );
+}
             if (container.path("exitCode").asInt(-1) != 0) {
                 throw new RuntimeException(
                         "PhantomBuster execution failed: "
@@ -335,6 +337,23 @@ private JsonNode waitForPhantom(String containerId)
             }
 
             JsonNode rawResultObject = container.path("resultObject");
+            if (rawResultObject.isMissingNode()
+        || rawResultObject.isNull()) {
+
+    System.out.println("Trying fetchResults endpoint...");
+
+    JsonNode fetchedResult =
+            phantomBusterService.fetchResults(containerId);
+            System.out.println("FETCH RESULTS RESPONSE: " + fetchedResult);
+
+    if (!fetchedResult.isMissingNode()
+            && !fetchedResult.isNull()) {
+
+        System.out.println("Fetched result object successfully");
+
+        return normalizeProfiles(fetchedResult);
+    }
+}
 
             if (rawResultObject.isMissingNode()
                     || rawResultObject.isNull()) {
@@ -432,7 +451,6 @@ private JsonNode normalizeProfiles(JsonNode result) {
     );
 }
 
-
   private String buildLinkedInSearchUrl(AlumniSearchRequest request) {
 
     // Find university in PostgreSQL or discover it using Bridgly
@@ -460,5 +478,4 @@ private JsonNode normalizeProfiles(JsonNode result) {
             .map(this::mapToResponse)
             .toList();
 }
-    
 }

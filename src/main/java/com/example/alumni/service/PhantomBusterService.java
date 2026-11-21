@@ -77,10 +77,10 @@ public class PhantomBusterService {
                     .queryParam("withResultObject", "true")
                     .queryParam("withOutput", "true")
                     .build())
-            .header("X-Phantombuster-Key", apiKey)
+            .header("X-Phantombuster-Key", apiKey.trim())
             .retrieve()
             .body(JsonNode.class);
-   }
+}
    public JsonNode downloadJsonFile(String jsonUrl) {
 
     return restClient.get()
