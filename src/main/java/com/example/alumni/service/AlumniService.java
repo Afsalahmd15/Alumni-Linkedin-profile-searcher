@@ -343,16 +343,26 @@ if (output1.toLowerCase().contains("monthly search limits reached")) {
     System.out.println("Trying fetchResults endpoint...");
 
     JsonNode fetchedResult =
-            phantomBusterService.fetchResults(containerId);
-            System.out.println("FETCH RESULTS RESPONSE: " + fetchedResult);
+        phantomBusterService.fetchResults(containerId);
 
-    if (!fetchedResult.isMissingNode()
-            && !fetchedResult.isNull()) {
+System.out.println("FETCH RESULTS RESPONSE: " + fetchedResult);
 
-        System.out.println("Fetched result object successfully");
+JsonNode fetchedProfiles = fetchedResult;
 
-        return normalizeProfiles(fetchedResult);
-    }
+// Extract resultObject if the response wraps it
+if (fetchedResult.isObject() && fetchedResult.has("resultObject")) {
+    fetchedProfiles = fetchedResult.path("resultObject");
+}
+
+if (!fetchedProfiles.isMissingNode()
+        && !fetchedProfiles.isNull()) {
+
+    System.out.println("Fetched result object successfully");
+
+    return normalizeProfiles(fetchedProfiles);
+}
+
+System.out.println("PhantomBuster returned a null resultObject.");
 }
 
             if (rawResultObject.isMissingNode()
